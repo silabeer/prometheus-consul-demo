@@ -1,0 +1,23 @@
+  {
+    "node_name": "blackbox-exporter-01",
+    "leave_on_terminate": false,
+    "service": {
+        "id": "blackbox-exporter",
+        "tags": [
+            "healthcheck",
+            "url:https://run.mocky.io/v3/cc487eaa-1438-4cfa-8d29-3e45e1740593"
+             ],
+      "name": "blackbox-exporter-01",
+      "address": "blackbox-exporter",
+      "port": 9115,
+      "meta": {
+        "app": "blackbox-exporter",
+        "team": "webgroup",
+        "project": "web-server"
+      }, 
+      "check": {
+        "http": "http://blackbox-exporter:9115/metrics",
+        "interval": "10s"
+      }
+    }
+  }

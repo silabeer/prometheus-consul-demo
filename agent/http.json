@@ -1,0 +1,30 @@
+{
+    "services": [
+    {
+     "id": "http_01",
+     "name": "http",
+     "tags": [
+        "http:https://run.mocky.io/v3/74bacc67-7058-4e89-9087-73c9590cfc4e",
+        "team:linux",
+        "prometheus-http-check"
+       ]
+    },
+    {"id": "http_02",
+     "name": "http",
+     "tags": [
+        "http:https://run.mocky.io/v3/32e091c4-df1d-403b-b4c8-600e948116bd",
+        "team:linux",
+        "prometheus-http-check"
+       ]
+    },
+    {
+     "id": "http_03",
+     "name": "http",
+     "tags": [
+        "http:https://run.mocky.io/v3/726938fd-e955-48fb-a134-bd3fe45f623d",
+        "team:linux",
+        "prometheus-http-check"
+       ]
+    }
+    ]
+}

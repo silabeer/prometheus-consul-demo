@@ -1,0 +1,158 @@
+version: '3'
+
+networks:
+  consul:
+    driver: bridge
+
+volumes:
+    prometheus_data: {}
+
+services:
+  consul-server:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-server
+    restart: always
+    volumes:
+     - ./consul/server.json:/consul/config/server.json:ro
+    networks:
+      - consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command: "agent"
+
+  consul-exporter:
+    image: prom/consul-exporter
+    container_name: consul-exporter
+    restart: always
+    networks:
+      - consul
+    ports:
+      - "9107:9107"
+    command: "--consul.server=consul-server:8500"
+
+  consul-client:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-client
+    restart: always
+    volumes:
+     - ./consul/client.json:/consul/config/client.json:ro
+    networks:
+      - consul
+    command: "agent"
+
+  node-exporter-client-01:
+    image: hashicorp/consul:1.10.0
+    container_name: node-exporter-client-01
+    restart: always
+    volumes:
+     - ./agent/node-01.json:/agent/config/node-01.json:ro
+    networks:
+      - consul
+    command: "agent -retry-join consul-server -config-file /agent/config/node-01.json"
+    depends_on:
+      - node-exporter-01
+
+  node-exporter-client-02:
+    image: hashicorp/consul:1.10.0
+    container_name: node-exporter-client-02
+    restart: always
+    volumes:
+     - ./agent/node-02.json:/agent/config/node-02.json:ro
+    networks:
+      - consul
+    command: "agent -retry-join consul-server -config-file /agent/config/node-02.json"
+    depends_on:
+      - node-exporter-02
+
+  blackbox-exporter-client:
+    image: hashicorp/consul:1.10.0
+    container_name: blackbox-exporter-client
+    restart: always
+    volumes:
+     - ./agent/blackbox.json:/agent/config/blackbox.json:ro
+    networks:
+      - consul
+    command: "agent -retry-join consul-server -config-file /agent/config/blackbox.json"
+    depends_on:
+      - blackbox-exporter
+
+  blackbox-exporter-client-http:
+    image: hashicorp/consul:1.10.0
+    container_name: blackbox-exporter-client-http
+    restart: always
+    volumes:
+     - ./agent/http.json:/agent/config/http.json:ro
+    networks:
+      - consul
+    command: "agent -retry-join consul-server -config-file /agent/config/http.json"
+    depends_on:
+      - blackbox-exporter
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    networks:
+      - consul
+
+  node-exporter-01:
+    image: quay.io/prometheus/node-exporter:latest
+    command: 
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9100:9100
+    networks:
+      - consul
+
+  node-exporter-02:
+    image: quay.io/prometheus/node-exporter:latest
+    command: 
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9101:9100
+    networks:
+      - consul
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.45.0
+    container_name: cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+    restart: unless-stopped
+    ports:
+      - 8085:8080
+    labels:
+      org.label-schema.group: "monitoring"
+    networks:
+      - consul
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    ports:
+      - 9115:9115
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml
+    networks:
+      - consul

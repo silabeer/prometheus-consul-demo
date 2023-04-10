@@ -1,0 +1,23 @@
+{
+  "ID": "cadvisor-exporter",
+  "Name": "cadvisor-exporter",
+  "Tags": [
+    "cadvisor-exporter"
+  ],
+  "Address": "cadvisor",
+  "Port": 8080,
+  "Meta": {
+    "app": "docker",
+    "team": "cloudgroup",
+    "project": "docker-service"
+  },
+  "EnableTagOverride": false,
+  "Check": {
+    "HTTP": "http://cadvisor:8080/metrics",
+    "Interval": "10s"
+  },
+  "Weights": {
+    "Passing": 10,
+    "Warning": 1
+  }
+}

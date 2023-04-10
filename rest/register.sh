@@ -1,0 +1,1 @@
+curl --request PUT --data @cadvisor-exporter.json http://localhost:8500/v1/agent/service/register\?replace-existing-checks\=1
